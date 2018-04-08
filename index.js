@@ -4,33 +4,38 @@ var app = express();
 var path = require('path');
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
-var port = process.env.PORT || 3000;
+var PORT = process.env.PORT || 5000;
 
-server.listen(port, function() {
-    console.log('Server listening at port %d', port);
-});
+var client = require('socket.io-client');
+var reactSocket = client.connect('http://localhost:3000', { reconnect: true });//connection to server B
 
-// Routing
-app.use(express.static(path.join(__dirname, 'public')));
+server.listen(PORT, () => console.log(`Listening on ${ PORT }`));
+
+
 
 // Chatroom
-
 var numUsers = 0;
 
 io.on('connection', function(socket) {
     var addedUser = false;
+    console.log('Client connected');
 
     // when the client emits 'new message', this listens and executes
-    socket.on('new message', function(data) {
+    socket.on('message', function(message, user) {
+        parsedUser = JSON.parse(user);
+        console.log('message received: ' + message );
         // we tell the client to execute 'new message'
-        socket.broadcast.emit('new message', {
-            username: socket.username,
-            message: data
-        });
+        console.log('user: ' + parsedUser);
+        author = parsedUser.first_name + " " + parsedUser.last_name;
+        console.log('author: ' + author);        
+        response = JSON.stringify({message: message, user: user, author: author}, null, 3);
+        console.log('response: ' + response);        
+        console.log('connected clients: ' + io.sockets.clients());
+        io.emit('server message', response);
     });
 
     // when the client emits 'add user', this listens and executes
-    socket.on('add user', function(username) {
+    socket.on('join', function(username) {
         if (addedUser) return;
 
         // we store the username in the socket session for this client
@@ -41,7 +46,7 @@ io.on('connection', function(socket) {
             numUsers: numUsers
         });
         // echo globally (all clients) that a person has connected
-        socket.broadcast.emit('user joined', {
+        socket.broadcast.emit('joined', {
             username: socket.username,
             numUsers: numUsers
         });
@@ -62,7 +67,7 @@ io.on('connection', function(socket) {
     });
 
     // when the user disconnects.. perform this
-    socket.on('disconnect', function() {
+    socket.on('leave', function() {
         if (addedUser) {
             --numUsers;
 
