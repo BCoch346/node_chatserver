@@ -35,24 +35,31 @@ io.on('connection', function(socket) {
     });
 
     // when the client emits 'add user', this listens and executes
-    socket.on('join', function(username) {
+    socket.on('login', function(username) {
+        console.log('login called');
         if (addedUser) return;
 
         // we store the username in the socket session for this client
         socket.username = username;
         ++numUsers;
         addedUser = true;
-        socket.emit('login', {
-            numUsers: numUsers
-        });
+        //socket.emit('login', {
+        //    numUsers: numUsers,
+        //    username: socket.username,
+        //    message: "login successful"
+        //});
         // echo globally (all clients) that a person has connected
-        socket.broadcast.emit('joined', {
+        console.log('emiting success: ' + socket.username);
+
+        socket.broadcast.emit('login', {
             username: socket.username,
-            numUsers: numUsers
+            numUsers: numUsers, 
+            message: ''
         });
     });
 
     // when the client emits 'typing', we broadcast it to others
+    console.log("broadcasting login");
     socket.on('typing', function() {
         socket.broadcast.emit('typing', {
             username: socket.username
@@ -67,12 +74,13 @@ io.on('connection', function(socket) {
     });
 
     // when the user disconnects.. perform this
-    socket.on('leave', function() {
+    socket.on('logout', function() {
+        console.log("broadcasting logout");
         if (addedUser) {
             --numUsers;
 
             // echo globally that this client has left
-            socket.broadcast.emit('user left', {
+            socket.broadcast.emit('logout', {
                 username: socket.username,
                 numUsers: numUsers
             });
