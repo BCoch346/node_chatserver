@@ -7,7 +7,7 @@ var io = require('socket.io')(server);
 var PORT = process.env.PORT || 5000;
 
 var client = require('socket.io-client');
-var reactSocket = client.connect('http://localhost:3000', { reconnect: true });//connection to server B
+var reactSocket = client.connect('https://agile-ridge-62726.herokuapp.com/', { reconnect: true });//connection to server B
 
 server.listen(PORT, () => console.log(`Listening on ${ PORT }`));
 
